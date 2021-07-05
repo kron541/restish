@@ -443,7 +443,18 @@ func loadOpenAPI3(cfg Resolver, cmd *cobra.Command, location *url.URL, resp *htt
 
 			switch scheme.Type {
 			case "apiKey":
-				// TODO: api key auth
+				switch scheme.In {
+				// TODO: implement apiKey in query and Cookie
+				case "query":
+				case "cookie":
+				case "header":
+					authSchemes = append(authSchemes, cli.APIAuth{
+						Name: "api-key-header",
+						Params: map[string]string{
+							"cmd": "",
+						},
+					})
+				}
 			case "http":
 				if scheme.Scheme == "basic" {
 					authSchemes = append(authSchemes, cli.APIAuth{
@@ -543,6 +554,13 @@ func loadAutoConfig(api *cli.API, swagger *openapi3.T) {
 			case "http":
 				if scheme.Scheme == "basic" {
 					authName = "http-basic"
+				}
+			case "apiKey":
+				switch scheme.In {
+				case "query":
+				case "cookie":
+				case "header":
+					authName = "api-key-header"
 				}
 			case "oauth2":
 				if scheme.Flows != nil {
