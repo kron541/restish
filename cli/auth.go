@@ -2,6 +2,8 @@ package cli
 
 import (
 	"net/http"
+	"os/exec"
+	"strings"
 )
 
 // AuthParam describes an auth input parameter for an AuthHandler.
@@ -43,5 +45,28 @@ func (a *BasicAuth) Parameters() []AuthParam {
 // OnRequest gets run before the request goes out on the wire.
 func (a *BasicAuth) OnRequest(req *http.Request, key string, params map[string]string) error {
 	req.SetBasicAuth(params["username"], params["password"])
+	return nil
+}
+
+// ApiKeyHeaderFromShellAuth implements authentication via API key in header based on shell command output
+type ApiKeyHeaderFromShellAuth struct{}
+
+// Parameters define the ApiKeyHeaderAuth parameter names.
+func (a *ApiKeyHeaderFromShellAuth) Parameters() []AuthParam {
+	return []AuthParam{
+		{Name: "cmd", Required: true},
+	}
+}
+
+func (a *ApiKeyHeaderFromShellAuth) OnRequest(req *http.Request, key string, params map[string]string) error {
+	out, err := exec.Command("bash", "-c", params["cmd"]).Output()
+	if err != nil {
+		panic("Error running command for ApiKeyHeaderFromShellAuth")
+	}
+	data := strings.Split(strings.TrimSuffix(string(out), "\n"), ":")
+	if len(data) != 2 {
+		panic("Format error for command in ApiKeyHeaderFromShellAuth")
+	}
+	req.Header.Add(data[0], data[1])
 	return nil
 }

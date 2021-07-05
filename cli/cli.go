@@ -421,6 +421,7 @@ func Defaults() {
 
 	// Register auth schemes
 	AddAuth("http-basic", &BasicAuth{})
+	AddAuth("api-key-header", &ApiKeyHeaderFromShellAuth{})
 }
 
 // Run the CLI! Parse arguments, make requests, print responses.
